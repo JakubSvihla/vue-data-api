@@ -1,46 +1,68 @@
 <template>
-  <div id="app">
-    <AddTodo v-on:add-todo="addTodo" />
-    <Todos v-bind:todos="todos" v-on:del-todo="deleteTodo" />
+
+  <div class="app">
+    <div class="domains">
+    <Domains
+      :domains="domains"
+      v-on:get-info="getInfo"
+
+    />
+    <button class="btn btn-reload" @click="reload">Reload</button>
+    </div>
+    <InfoDisplay
+      :info="info"
+      class="infoDisplay"
+    />
   </div>
+
 </template>
 
 <script>
-import Todos from '../components/Todos';
-import AddTodo from '../components/AddTodo';
+import Domains from '../components/Domains';
+import InfoDisplay from '../components/InfoDisplay';
 import axios from 'axios';
+
+
 
 export default {
   name: 'Home',
   components: {
-    Todos,
-    AddTodo
+    Domains,
+    InfoDisplay,
   },
   data() {
     return {
-      todos: []
+      domains: [],
+      info: [],
+      domainId: Number,
+      pageId: Number,
     }
   },
   methods: {
-    deleteTodo(id) {
-      axios.delete(`https://jsonplaceholder.typicode.com/todos/${id}`)
-        .then(res => this.todos = this.todos.filter(todo => todo.id !== id))
-        .catch(err => console.log(err));
-    },
-    addTodo(newTodo) {
-      const { title, completed } = newTodo;
+    getInfo(domainId, pageId) {
 
-      axios.post('https://jsonplaceholder.typicode.com/todos', {
-        title,
-        completed
+      this.domainId = domainId;
+      this.pageId = pageId;
+
+      axios({
+        method: 'get',
+        url: `https://www.ipushpull.com/api/1.0/domains/id/${domainId}/page_content/id/${pageId}/`,
       })
-        .then(res => this.todos = [...this.todos, res.data])
-        .catch(err => console.log(err));
+      .then(res => {
+        this.info = res.data.content.flat();
+      })
+      .catch(err => console.log(err));
+    },
+    reload() {
+      this.getInfo(this.domainId, this.pageId)
     }
   },
   created() {
-    axios.get('https://jsonplaceholder.typicode.com/todos?_limit=5')
-      .then(res => this.todos = res.data)
+    axios.get('https://www.ipushpull.com/api/1.0/domain_page_access/')
+      .then(res => {
+        const domains = res.data.domains;
+        return this.domains = domains;
+      })
       .catch(err => console.log(err));
   }
 }
@@ -59,15 +81,22 @@ export default {
   }
 
   .btn {
-    display: inline-block;
-    border: none;
-    background: #555;
-    color: #fff;
-    padding: 7px 20px;
-    cursor: pointer;
+    padding: 5px 10px;
+    background-color: #4287f5;
+    border-radius: 3px;
+    width: 180px;
   }
 
-  .btn:hover {
-    background: #666;
+  .btn-reload {
+    width: 100px;
+  }
+
+  .app {
+    display: flex;
+  }
+
+  .domains,
+  .infoDisplay {
+    width: 50%;
   }
 </style>
